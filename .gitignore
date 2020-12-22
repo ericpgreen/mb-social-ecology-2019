@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+do_not_track/*
+mb-se_cache/*
+mb-se_files/*
+*.fff
+*.log
+*.tex
+*.ttt
