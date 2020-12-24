@@ -1,0 +1,703 @@
+---
+title             : "Is social-ecological risk associated with individual HIV risk beliefs and behaviours?: An analysis of Kenyan adolescents' local communities and activity spaces"
+shorttitle        : "Social-ecological risk"
+
+author: 
+  - name          : "Christina N. Schmidt"
+    affiliation   : "1"
+  - name          : "Eve S. Puffer"
+    affiliation   : "2,3"
+  - name          : "Sherryl Broverman"
+    affiliation   : "2,4"
+  - name          : "Virginia Warren"
+    affiliation   : "2"
+  - name          : "Eric P. Green"
+    affiliation   : "2"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Duke Global Health Institute, Box 90519, Durham, NC, USA"
+    email         : "eric.green@duke.edu"
+
+affiliation:
+  - id            : "1"
+    institution   : "UCSF School of Medicine"
+  - id            : "2"
+    institution   : "Duke Global Health Institute"
+  - id            : "3"
+    institution   : "Department of Psychology and Neuroscience, Duke University"
+  - id            : "4"
+    institution   : "Department of Biology, Duke University"
+
+abstract: |
+  The places where adolescents live, learn, and play are thought to influence behaviours and health, but we have limited tools for measuring environmental risk on a hyperlocal level. Working with 218 adolescents and their parents/guardians in rural western Kenya, we combined participatory mapping activities with satellite imagery to identify adolescent activity spaces and create a novel measure of social-ecological dangers. We then examined the associations between community risk and individual HIV risk beliefs and behaviours. We found support for the conjecture, derived from social-ecological models of HIV transmission, that community-level risks may be associated with individual beliefs and behaviours. As community risk increased for a sample of Kenyan adolescents, so did their reports of riskier sex beliefs and behaviours, as well as unsupervised outings at night. This study reinforces calls for disease prevention approaches that go beyond emphasizing individual behaviour change.
+  
+keywords          : "activity space; participatory mapping; social-ecological models; HIV; adolescents"
+
+bibliography      : [mbse.bib]
+
+floatsintext      : yes
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+csl               : apa.csl
+output            : papaja::apa6_pdf
+header-includes:
+  - \usepackage{setspace}
+  - \AtBeginEnvironment{tabular}{\singlespacing}
+  - \usepackage{pdflscape}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
+  - \raggedbottom
+---
+
+```{r setup, include = FALSE}
+  library(papaja)
+  library(knitr)
+  library(kableExtra)
+  library(tidyverse)
+  library(furniture)
+  library(gridExtra)
+  library(tidyquant)
+  library(nlme)
+  library(glmmTMB)
+  library(stargazer)
+  library(ggthemes)
+  library(brms)
+  library(bayesplot)
+  library(arm)
+  library(ggalt)
+  library(tidybayes)
+  library(patchwork)
+```
+
+```{r document-preferences}
+  knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+# load real study data
+# load("do_not_track/input/mbse.RData")
+
+  load("input/fake_data.RData") # this is the simulated data on github
+  df <- df_syn
+```
+
+# Introduction
+
+The places where young people live, learn, and play may help to shape their health outcomes—for better and worse. For instance, living near accessible neighbourhood green spaces is associated with greater physical activity [@janssen2015], which is a predictor of better health outcomes. Conversely, proximity to tobacco stores has been linked to increased risk of tobacco use [@lipperman2020], a predictor of health problems such as lung cancer.
+
+Social-ecological models offer a useful framework for representing the complex connections between health and place. Psychologist Urie Bronfenbrenner formalized the first ecological systems theory in the 1970s, depicting children at the centre of several nested systems expanding outward from the child to the broader social, political, and historical context [@bronfenbrenner1979]. @mcleroy1988 built on this theory, and on work by @belsky1980 and others, to explain how ecological systems shape individual behaviours and to identify opportunities for health promotion interventions at each level.
+
+Ecological models like these have influenced public health research over the past 40 years, especially in the field of HIV prevention. Around the year 2000, two decades into the epidemic, the public health community began to emphasize the need for 'structural' (ecological) approaches to HIV prevention that targeted contextual drivers of transmission at multiple levels [@blankenship2000; @sumartojo2000]. Researchers responded with dozens of papers that used ecological systems thinking to further conceptualize these structural factors, to identify sources of social-ecological risk, and to design prevention interventions [e.g., @parker2003; @poundstone2004; @auerbach2011; @diclemente2016; @rhodes2005; @baral2013].
+
+Despite the wide adoption of ecological models in public health and HIV, however, the definition and measurement of social-ecological risk remains underdeveloped—the measurement of place-based and community-based risk in particular. With notable exceptions [@martinez2014; @conners2016; @theall2018], the most common definition of place remains pre-defined administrative units [@perchoux2013]. In some settings, typically in high-income countries, a limited set of community data, such as crime statistics, are available down to the block or neighbourhood level. More commonly, however, community characteristics only describe broad top-level administrative units, such as counties or states. These broad units can be home to tens or hundreds of thousands of people to millions. This renders the data of limited use for understanding community exposure to risk because top-level administrative boundaries do not capture how and where people spend time within these units [@browning2014; @morrison2019; @vaughan2017].
+
+One approach to defining more local boundaries is to measure activity spaces. A person's activity space encompasses the locations that they traverse throughout their daily routines [@schonfelder2003]. There are various methods for collecting activity data and constructing activity spaces [@smith2019]. For instance, @sherman2005 asked study participants to report how often they engaged in 34 possible routine activities (e.g., buy gasoline, go to church) and to report the location of each activity. The authors used this georeferenced location data to calculate a polygon (ellipse) for each participant that covered the majority of locations visited (weighted by frequency). Approaches like this require countries to have residential and retail address systems that cover even rural areas. Other common methods require participants to have access to location tracking technology. In the absence of these resources, researchers have asked participants to hand draw community maps as a measure of activity space, but the accuracy of such an approach is uncertain [@basta2010].
+
+In this study, we used activity spaces to understand and quantify social-ecological risks for HIV transmission among adolescents. Given the public health importance of HIV prevention among this group [@protogerou2014; @diclemente2016]—and the limitations of existing approaches for studying place-based risk factors—we worked with adolescents and their parents/guardians in rural western Kenya to meet the following aims: (a) use participatory mapping aided by satellite imagery to construct individual activity spaces; (b) identify and quantify dangerous features in these spaces using data from focus groups and surveys; and (c) explore the relationship between space characteristics and previously identified psychosocial correlates of HIV risk in this sample, including gender, emotional problems, and HIV risk beliefs and behaviours. Our primary research question was, "To what extent is social-ecological risk associated with individual HIV risk beliefs and behaviours?"
+
+# Materials and Methods
+
+In this study we examined previously unanalysed activity space data collected in 2009 as part of a cross-sectional study on adolescent HIV risk [@puffer:2011;@green:2016]. The research protocol was reviewed and approved by ethical review boards at Duke University and the Kenya Medical Research Institute (#2516).
+
+## Setting
+
+The original study took place in 2009 in Muhuru Bay, Kenya, a small, rural town on the shores of Lake Victoria. Muhuru Bay is located within the former Nyanza province, which at the time of the study had the highest HIV prevalence in the country at ~15% [@kenya2014]. Prior to adopting a new constitution in 2010, Muhuru Bay was a division (province > district > division) with 4 locations and 8 sublocations. This study took place in all 8 of the former sublocations (average sublocation area 5.6 square kilometres).
+
+## Participants and Procedures
+
+We analysed three types of data collected in 2009: (a) surveys with adolescents and one of their caregivers; (b) participatory mapping interviews with adolescents from the survey sample; and (c) focus groups with community members.
+
+### Surveys
+
+Adolescents 10 to 18 years of age were recruited from 14 local schools to participate in a survey of HIV risk behaviours and psychosocial wellbeing [@puffer:2011]. 353 of 1,847 eligible students were randomly selected and invited to participate, with 325 enrolling in the study and completing the survey. A caregiver (parent or guardian) for each adolescent was also recruited and surveyed (separately), resulting in data from 325 dyads. Survey measures used in the current study are described below. 
+
+### Participatory Mapping Interviews
+
+Adolescents were then invited to participate in follow-up individual interviews about their daily activities [@green:2016]. 316/325 students participated, and 218 of these student interviews generated sufficient data for the spatial analysis described in this paper.
+
+### Community Focus Group Discussions 
+
+As described in [@green:2016], we recruited health workers, traditional male chiefs, women leaders, parents/guardians, and teachers to participate in focus group discussions and activities to understand characteristics of the local community. We conducted 15 different meetings with a total of 58 adults.
+
+## Study Constructs and Measurement
+
+Our primary construct of interest was social-ecological risk. To help the reader understand our construction of social-ecological risk scores, we first describe how we constructed individuals' activity spaces. Then we describe how we constructed social-ecological risk scores before describing the secondary data we accessed on adolescent HIV risk behaviours, beliefs, and emotional and behavioural wellbeing.  
+
+### Adolescent Activity Spaces
+
+Adolescents participated in a participatory mapping interview about their activities during a reference day in the prior week. At the start of the interview, a facilitator helped the adolescent to locate their home on a laptop displaying high-resolution satellite imagery of the community. The adolescent then created a log of their activities from waking up until going to sleep. The location of each activity was marked as a digital waypoint on the map along with other regularly visited places.
+
+We then used the aspace package [version 3.2; @aspace] in R to construct the activity space for each adolescent. Each activity space was represented by an unweighted standard deviation ellipse based on the adolescent's georeferenced activity log. We calculated the planimetric area of each activity space in square kilometres. Panel B of Figure \@ref(fig:dotex) shows an anonymized example of an adolescent's activity space.
+
+```{r dotex, fig.cap="Panel A shows an example paper map created by one adult participant. Panel B shows the georeferenced locations of red dangerous place stickers extracted from all scanned paper maps, as well as a density raster of these points. Overlaid on this density raster are sublocation boundaries and an example activity space ellipse for one adolescent (moved to preserve anonymity).", out.width='90%'}
+  knitr::include_graphics("dotexample.png")
+```
+
+### Social-Ecological Risk Environments
+
+We constructed indicators of perceived danger in the community using two different data sources: (a) risk density arising from our 'dotmap' focus groups and (b) caregiver-reported community dangers. We used the caregiver-reported data to assess the validity of our new 'dotmap' generated risk indicator.
+
+#### 'Dotmap' Focus Groups 
+
+As described in @green:2016, focus group participants not involved in the adolescent or caregiver surveys were given paper maps of the community and placed red sticker dots on the maps to indicate dangerous places for children and adolescents to spend time. Stickers represented "votes," and adults could place up to 8 red stickers anywhere on the map. Panel A of Figure \@ref(fig:dotex) shows an example paper map from one adult participant. We scanned and georeferenced each paper 'dotmap', thereby converting each sticker into a waypoint on a digital map.
+
+We then used the spatstat R package [version 1.63-3; @spatstat] to calculate kernel density estimates of the dangerous places and converted these estimates into a raster where every pixel in the raster grid carried a density value. Panel B of Figure \@ref(fig:dotex) shows the georeferenced locations of red 'dangerous place' stickers extracted from all scanned paper maps, as well as a density raster of these points. 
+
+To calculate the risk density for each area of interest, we overlaid sublocation and activity space polygons on the density map and summed the density values of the raster cells falling inside each polygon. The result was a quantitative social-ecological risk score for each adolescent's activity space and each sublocation.
+
+#### Individual Caregiver Surveys 
+
+As part of the caregiver survey, we asked parents and guardians if they agreed with two statements of the form (separately about boys and girls): "There are dangerous places for [girls/boys] in this community." Participants used a 4-point response scale from "strongly disagree" (0) to "strongly agree" (3) to answer with respect to their sublocation. We averaged each caregiver's responses to these two questions and calculated the grand mean of perceived community danger for each sublocation. We used these sublocation scores to validate the 'dotmap' generated risk density scores for each sublocation.
+
+## Adolescent HIV Risk and Related Psychosocial Factors
+
+Data on adolescent HIV risk behaviours, beliefs, and emotional and behavioural wellbeing were collected through individual surveys. Adolescents and one of their caregivers completed separate 90-minute surveys administered verbally in private by a trained Kenyan enumerator [@puffer:2011].
+
+### Emotional and Behavioural Wellbeing
+
+Caregivers and adolescents completed the Strengths and Difficulties Questionnaire [SDQ, ages 11-17; @goodman2001]. Participants responded, "not true" (0), "somewhat true" (1), or "certainly true" (2) to prompts such as, "Many worries or often seems worried"/"I worry a lot" (caregivers responded about the child, not themselves). We summed responses to the 5 emotional problems items and the 5 conduct problems items (each with a possible range of 0-10); higher scores represented more problems [$\alpha$ = 0.59 in the full sample, full scale; @puffer:2011].
+
+We assessed adolescents' symptoms of depression using the 27-item Children's Depression Inventory [CDI; @kovacs1992; @cluver2007]. For each item, adolescents were asked to select the statement that best described their mood or behaviours over the past 2 weeks (e.g., "Which statement describes how you have been feeling over the past 2 weeks? Nobody really loves me, I am not sure if anybody loves me, or I am sure that somebody loves me."). We summed responses to create a scale with a possible range of 0 to 54; higher scores represented greater depression severity [$\alpha$ = 0.66 in the full sample; @puffer:2011].
+
+### Beliefs Related to Sex and HIV
+
+We assessed adolescents' beliefs about sex and HIV with 16 original items that probed their acceptance of risky behaviours (e.g., "It is ok for men to have many sexual partners; it is okay to have sex with a person so they will buy you things"). Adolescents indicated their agreement with each belief on a 4-point scale that ranged from 0 to 3. We summed their responses to create a total score with a possible range from 0 to 48, where higher scores represented 'riskier' beliefs [$\alpha$ = 0.68 in the full sample; @puffer:2011].
+
+### HIV Risk Behaviours
+
+Adolescents indicated whether they ever engaged in vaginal or oral sex, the number of sex partners in the prior 12 months, and whether they used a condom during their last sexual encounter. Adolescents were coded as higher risk for HIV (1/0) if they reported having multiple sexual partners or not using a condom. Adolescents also indicated how often they left home at night unsupervised (never, once per week, twice per week, or more than twice per week).
+
+## Analysis
+
+We conducted all analyses in R (version 3.6.2; @R). After describing the study participants and adolescents' activity spaces, we attempted to answer several questions with the data. The results presented in this paper should be considered exploratory rather than confirmatory since we did not register our hypotheses in advance.
+
+### Does activity space size vary by gender and age?
+
+Prior work using participatory mapping methods in South Africa found that girls' social environments shrank with the onset of puberty while boys' environments expanded [@hallman2015]. To replicate this finding with our activity space data, we used the brms package [version 2.13.5, @brms] with default priors to fit a Bayesian linear mixed effects model of activity space area that included fixed effects for male gender, age, and the interaction between gender and age, as well as a random effect for school (gamma response distribution with a log link function). We tested the hypothesis that there would be a significant interaction between age and gender such that activity spaces get bigger with age for boys but shrink for girls.
+
+### Is activity space size associated with depression symptoms or emotional problems?
+
+A recent meta-analysis of studies of childhood and adolescent depression estimated that there is a small negative correlation between depressive symptoms and physical activity [@korczak2017]. This led us to ask whether emotional problems (as measured here by the CDI and SDQ) are also negatively correlated with geographic mobility among adolescents. To explore this relationship, we used the brms package with default priors to fit Bayesian linear mixed effects models of activity space area (sq. km) with fixed effects for emotional problems/depression symptoms and a random effect for school (gamma response distribution with a log link function).
+
+### Is dotmap-generated risk a valid measure of social-ecological risk?
+
+To validate that the dotmap-generated risk metric measures youth's risk environment, we estimated the rank correlation with the grand mean of perceived community danger constructed from caregivers' survey responses. This analysis was only possible at the sublocation-level (not at the activity space level) as this was the smallest unit that we asked caregivers to reference in the survey when responding to the questions, "There are dangerous places for [girls/boys] in this community." Therefore, we summed risk density at the sublocation-level (n=8) and calculated Spearman's rank correlation coefficient. As a reminder, the average sublocation area was 5.6 square kilometres.
+
+### Is social-ecological risk associated with individual HIV risk beliefs and behaviours?
+
+In the final analysis, we used the brms package with default priors to fit 6 Bayesian linear mixed models of 3 adolescent outcomes: leaving the house at night (1/0), being at higher risk for HIV (1/0), and 'risky' sexual beliefs (standardized, higher scores=riskier beliefs). Each model included a random effect for school and a different fixed effect indicator of social-ecological risk: risk density by (i) activity space or (ii) sublocation, both standardized (gaussian response distribution).
+
+# Results
+
+```{r}
+  df_ <- 
+  df %>%
+    mutate(y_male = ifelse(y_female==1, 0, 1)) %>%
+  # standardize iv
+    mutate(as_countBad_z = scale(as_countBad)) %>%
+    mutate(as_risk_z = scale(as_risk)) %>%
+    mutate(sl_risk_z = scale(sl_risk)) %>%
+    mutate(c_com56sl_gm_z = scale(c_com56sl_gm)) %>%
+  # center age
+    mutate(y_age_c = y_age - mean(y_age)) %>%
+  # make night out binary
+    mutate(y_nightoutfreqN_b = ifelse(y_nightoutfreqN>0, 1, 0))
+```
+
+## Participants
+
+### Surveys and Interviews
+
+Table \@ref(tab:part) summarizes the characteristics of `r nrow(df_)` adolescents and parents/guardians who completed the survey and were included in the activity space analysis. The average age of adolescents was `r printnum(mean(df_$y_age), digits=1)` years, and `r printnum(mean(df_$y_female)*100, digits=1)`% were female. Nearly 1 in 3 adolescents (`r printnum(mean(df_$y_orphan)*100, digits=1)`%) reported that both of their biological parents had died. The average caregiver who completed the survey about the adolescent was `r printnum(mean(df_$c_age), digits=1)` years old, and most were female (`r printnum(mean(df_$c_female)*100, digits=1)`%), married or cohabiting (`r printnum(mean(df_$c_marriedLT)*100, digits=1)`%), and working for money (`r printnum(mean(df_$c_working)*100, digits=1)`%). Very few caregivers had completed secondary school or any higher education (`r printnum(mean(df_$c_compSec)*100, digits=1)`%).
+
+```{r part, results='asis'}
+  df_ %>%
+    dplyr::select(school, sublocation, y_age, y_female, y_orphan,
+                  c_age, c_female, c_marriedLT, c_working, c_compSec) %>%
+    mutate(y_female = factor(y_female,
+                             levels=c(0, 1),
+                             labels=c("Boys", "Girls"))) %>%
+    mutate(y_orphan = factor(y_orphan,
+                             levels=c(0, 1),
+                             labels=c("No", "Yes"))) %>%
+    mutate(c_female = factor(c_female,
+                             levels=c(0, 1),
+                             labels=c("No", "Yes"))) %>%
+    mutate(c_marriedLT = factor(c_marriedLT,
+                                levels=c(0, 1),
+                                labels=c("No", "Yes"))) %>%
+    mutate(c_working = factor(c_working,
+                              levels=c(0, 1),
+                              labels=c("No", "Yes"))) %>%
+    mutate(c_compSec = factor(c_compSec,
+                              levels=c(0, 1),
+                              labels=c("No", "Yes"))) %>%
+    group_by("Gender" = y_female) %>%
+    furniture::table1(
+      "Sublocation" = factor(sublocation),
+      "Mean age, youth (SD)" = y_age,
+      "Orphan, youth" = y_orphan,
+      "Mean age, guardian (SD)" = c_age,
+      "Female, guardian" = c_female,
+      "Married or cohabiting, guardian" = c_marriedLT,
+      "Working, guardian" = c_working,
+      "Completed secondary school or higher, guardian" = c_compSec,
+      output = "latex2",
+      total = TRUE,
+      type = "condense",
+      caption = "Participant characteristics.",
+      label = "tab:part",
+      rounding_perc = 0,
+      na.rm=FALSE)
+```
+
+### Focus Group Discussions
+
+58 adults from across the community participated in 1 of 15 different focus group discussions: 1 group of health workers (n = 5); 1 group of traditional male chiefs (n = 7); 1 group with women leaders (n = 4); and 12 groups with parents (n = 26) and teachers (n = 16) combined. Characteristics of focus group participants are described in @green:2016.
+
+## Descriptive Summary of Activity Spaces
+
+Table \@ref(tab:area) summarizes the characteristics of adolescent activity spaces in terms of size and social-ecological risk. The average area of activity spaces was `r printnum(mean(df_$as_areaK2), digits=1)` square kilometers. `r printnum(mean(df_$as_anyBad)*100, digits=1)`% of activity space polygons contained at least 1 dangerous place sticker, `r printnum(mean(df_$as_countBad), digits=1)` stickers on average. The average sum of kernel density raster values contained inside activity space polygons was `r printnum(mean(df_$as_risk), digits=6)` stickers per square meter. On average, sublocations are twice as large as adolescent activity spaces (5.6 sq. km vs 2.7 sq. km).
+
+```{r area, results='asis'}
+  df_ %>%
+    dplyr::select(y_female, as_areaK2, as_countBad, as_anyBad, as_risk) %>%
+    mutate(y_female = factor(y_female, 
+                             levels=c(0, 1),
+                             labels=c("Boys", "Girls"))) %>%
+    group_by("Gender" = y_female) %>%
+    furniture::table1(
+      "Mean area in square kilometers (SD)" = as_areaK2,
+      "Mean count of dangerous stickers (SD)" = as_countBad,
+      "Any dangerous stickers located within" = factor(as_anyBad,
+                                          levels=c(0,1),
+                                          labels=c("No", "Yes")),
+      "Mean density of stickers, per 1 sq m x1000 (SD)" = as_risk*1000,
+      output = "latex2",
+      total = TRUE,
+      type = "condense", 
+      caption = "Activity space characteristics.",
+      label = "tab:area",
+      rounding_perc = 0,
+      na.rm=FALSE)
+```
+
+2% of adolescents had activity spaces larger than `r printnum(quantile(df$as_areaK2, .98), digits=0)` sq km, and we considered removing them from the dataset. Activity spaces were intended to represent where adolescents spend the most time in daily life—their hyperlocal communities—but in these few cases such large areas could represent something else (e.g., errors in mapping, special trips to visit distant family members on the reference day). However, we concluded that it was not possible to confirm that these cases are true outliers and decided to leave them in the dataset.
+
+## Does activity space size vary by gender and age?
+
+```{r, cache=TRUE, results='hide', include=FALSE}
+# create indictor for males and center age
+  m1 <- brm(as_areaK2 ~ y_male*y_age_c + (1|school),
+            family=Gamma(link="log"),
+            data=df_,
+            seed=325)
+  
+  df_m1_factor <-
+  m1$data %>% 
+    mutate(y_male = factor(y_male, 
+                           levels = c(0, 1),
+                           labels = c("Girls", "Boys"))) 
+  
+  m1_factor <- update(m1, newdata = df_m1_factor)
+  
+  m1.p <- plot(marginal_effects(m1_factor))
+```
+
+Figure \@ref(fig:areaAgeSex) displays the marginal effects of the age (centered) by gender interaction from the model of activity space area. We see that activity space size does not differ on average by gender at the youngest ages in our sample, but does increase in size with age. However, we do not find support for the hypothesis that girls' social environments *shrink* with age. In fact, girls' activity spaces may get larger at a faster rate than boys' spaces as they age, but the 95% credible intervals are overlapping.
+
+```{r areaAgeSex, fig.cap="The marginal effects of the age (centered) by gender interaction from a Bayesian linear mixed effects model of activity space area (in sq km)."}
+  m1.p$`y_age_c:y_male` + theme_minimal() +
+    ylab("Activity space area (square kilometers)") +
+    xlab("Adolescent age (centered)") +
+    scale_color_viridis_d() +
+    scale_fill_viridis_d() +
+    theme(legend.title = element_blank())
+```
+
+
+## Is activity space size associated with emotional difficulties?
+
+```{r, cache=TRUE, include=FALSE, results='hide'}
+# c_emotionalDiff
+  m2.1 <- brm(as_areaK2 ~ scale(c_emotionalDiff) + (1|school), 
+              data=df_,
+              family=Gamma(link="log"),
+              seed=325)
+
+  m2.1_ <- 
+  m2.1 %>%
+    spread_draws((!!sym(paste0("b_", "scalec_emotionalDiff")))) %>%
+    rename("coef" = paste0("b_", "scalec_emotionalDiff")) %>%
+    mutate(iv_ = "c_emotionalDiff") %>%
+    mutate(out = "uni")
+
+  m2.2 <- brm(as_areaK2 ~ scale(c_emotionalDiff) + y_female + y_age_c + (1|school), 
+              data=df_,
+              family=Gamma(link="log"),
+              seed=325)
+  
+  m2.2_ <- 
+  m2.2 %>%
+    spread_draws((!!sym(paste0("b_", "scalec_emotionalDiff")))) %>%
+    rename("coef" = paste0("b_", "scalec_emotionalDiff")) %>%
+    mutate(iv_ = "c_emotionalDiff") %>%
+    mutate(out = "multi")
+  
+# y_emotionalDiff
+  m2.3 <- brm(as_areaK2 ~ scale(y_emotionalDiff) + (1|school), 
+              data=df_,
+              family=Gamma(link="log"),
+              seed=325)
+  
+  m2.3_ <-
+  m2.3 %>%
+    spread_draws((!!sym(paste0("b_", "scaley_emotionalDiff")))) %>%
+    rename("coef" = paste0("b_", "scaley_emotionalDiff")) %>%
+    mutate(iv_ = "y_emotionalDiff") %>%
+    mutate(out = "uni")
+
+  m2.4 <- brm(as_areaK2 ~ scale(y_emotionalDiff) + y_female + y_age_c + (1|school), 
+              data=df_,
+              family=Gamma(link="log"),
+              seed=325)
+  
+  m2.4_ <- 
+  m2.4 %>%
+    spread_draws((!!sym(paste0("b_", "scaley_emotionalDiff")))) %>%
+    rename("coef" = paste0("b_", "scaley_emotionalDiff")) %>%
+    mutate(iv_ = "y_emotionalDiff") %>%
+    mutate(out = "multi")
+  
+# y_cdi
+  m2.5 <- brm(as_areaK2 ~ scale(y_cdi) + (1|school), 
+              data=df_,
+              family=Gamma(link="log"),
+              seed=325)
+  
+  m2.5_ <-
+  m2.5 %>%
+    spread_draws((!!sym(paste0("b_", "scaley_cdi")))) %>%
+    rename("coef" = paste0("b_", "scaley_cdi")) %>%
+    mutate(iv_ = "y_cdi") %>%
+    mutate(out = "uni")
+
+  m2.6 <- brm(as_areaK2 ~ scale(y_cdi) + y_female + y_age_c + (1|school), 
+              data=df_,
+              family=Gamma(link="log"),
+              seed=325)
+  
+  m2.6_ <- 
+  m2.6 %>%
+    spread_draws((!!sym(paste0("b_", "scaley_cdi")))) %>%
+    rename("coef" = paste0("b_", "scaley_cdi")) %>%
+    mutate(iv_ = "y_cdi") %>%
+    mutate(out = "multi")
+  
+# combine
+  fit.m2 <- 
+  m2.1_ %>%
+    bind_rows(m2.2_) %>%
+    bind_rows(m2.3_) %>%
+    bind_rows(m2.4_) %>%
+    bind_rows(m2.5_) %>%
+    bind_rows(m2.6_) %>%
+    mutate(coef = exp(coef))
+```
+
+```{r}
+  y_cdi <- mean(df_$y_cdi, na.rm=TRUE)
+  c_emotionalDiff <- mean(df_$c_emotionalDiff, na.rm=TRUE)
+  y_emotionalDiff <- mean(df_$y_emotionalDiff, na.rm=TRUE)
+  
+  y_cdi_sd <- sd(df_$y_cdi, na.rm=TRUE)
+  c_emotionalDiff_sd <- sd(df_$c_emotionalDiff, na.rm=TRUE)
+  y_emotionalDiff_sd <- sd(df_$y_emotionalDiff, na.rm=TRUE)
+```
+
+Overall, adolescents in this subsample had low scores on our measure of depression symptoms and low to moderate emotional difficulty scores. The average CDI score was `r printnum(y_cdi, digits=1)` (SD=`r printnum(y_cdi_sd, digits=1)`; possible range 0-54), and the average emotional difficulties scores were `r printnum(y_emotionalDiff, digits=1)` (adolescent-report; SD=`r printnum(y_emotionalDiff_sd, digits=1)`, possible range 0-10) and `r printnum(c_emotionalDiff, digits=1)` (caregiver-report; SD=`r printnum(c_emotionalDiff_sd, digits=1)`, possible range 0-10).
+
+Figure \@ref(fig:behact) displays the percent change in activity space area for every 1 standard deviation increase in emotional problems or depression. Each panel shows Markov chain Monte Carlo draws from the posterior distributions of the unadjusted and adjusted problems/depression parameters. The adjusted models control for age and gender.
+
+```{r}
+  m2.2.h <- hypothesis(m2.2, "scalec_emotionalDiff > log(.9)")
+  m2.4.h <- hypothesis(m2.4, "scaley_emotionalDiff > log(.9)")
+  m2.6.h <- hypothesis(m2.5, "scaley_cdi > log(.9)")
+```
+
+Across models we see little evidence of a relationship between the size of adolescents' activity spaces and their emotional problems or symptoms of depression. The posterior probabilities of caregiver-reported adolescent emotional problems and adolescent-reported symptoms of depression are both centered on the null, suggesting that there is no association. If there is a relationship, we can confidently rule out any large effect of practical importance. The posterior probability that the effect is less than a 10% reduction in area ranges from `r printnum(as.numeric(m2.4.h$hypothesis["Post.Prob"]*100), digits=1)`% to `r printnum(as.numeric(m2.2.h$hypothesis["Post.Prob"]*100), digits=1)`% across the adjusted models.
+
+```{r behact, fig.cap="Results of 6 separate Bayesian linear mixed effects models of activity space area (sq km) with fixed effects for emotional problems/depression symptoms (all models) plus fixed effects for adolescent gender and age (centered) in the adjusted models. All models included a random effect for school. Plots show Markov chain Monte Carlo draws from the posterior distributions of the problems/depression parameters. The emotional problem and depression predictor variables were standandardized, but outcome of activity space area was not. This means that the point estimates of the coefficients can be interpreted as the predicted change in activity space area for every 1 standard deviation increase in emotional problems or depression. CR=caregiver report about adolescents. AR=adolescent report.", fig.height=4, fig.width=10}
+
+  fit.m2.w <-
+  fit.m2 %>% 
+    mutate(coef=(coef-1)*100) %>%
+    mutate(out = ifelse(out=="uni" & iv_=="c_emotionalDiff", 
+                        "SDQ emotion, CR, unadj",
+                 ifelse(out=="multi" & iv_=="c_emotionalDiff", 
+                        "SDQ emotion, CR, adj",
+                 ifelse(out=="uni" & iv_=="y_emotionalDiff", 
+                        "SDQ emotion, AR, unadj",
+                 ifelse(out=="multi" & iv_=="y_emotionalDiff", 
+                        "SDQ emotion, AR, adj",
+                 ifelse(out=="uni" & iv_=="y_cdi", 
+                        "CDI, AR, unadj",
+                 ifelse(out=="multi" & iv_=="y_cdi", 
+                        "CDI, AR, adj",
+                        "?"))))))) %>%
+    pivot_wider(id_cols = c(-out, -coef),
+                names_from = "out",
+                values_from = "coef")
+
+  color_scheme_set("viridisA")
+  bayesplot_theme_set(theme_minimal())
+  
+  p.m2.c_emotionalDiff <- 
+  fit.m2.w %>% 
+    filter(iv_=="c_emotionalDiff") %>%
+    dplyr::select(`SDQ emotion, CR, unadj`, `SDQ emotion, CR, adj`) %>%
+    mcmc_areas_ridges(prob = 0.8) + 
+    xlab("% change in area") + 
+    vline_at(0, color="grey") +
+    ggtitle("Activity space area") +
+    xlim(-50, 50)
+  
+  p.m2.y_emotionalDiff <- 
+  fit.m2.w %>% 
+    filter(iv_=="y_emotionalDiff") %>%
+    dplyr::select(`SDQ emotion, AR, unadj`, `SDQ emotion, AR, adj`) %>%
+    mcmc_areas_ridges(prob = 0.8) + 
+    xlab("% change in area") + 
+    vline_at(0, color="grey") +
+    ggtitle("Activity space area") +
+    xlim(-50, 50)
+  
+  p.m2.y_cdi <- 
+  fit.m2.w %>% 
+    filter(iv_=="y_cdi") %>%
+    dplyr::select(`CDI, AR, unadj`, `CDI, AR, adj`) %>%
+    mcmc_areas_ridges(prob = 0.8) + 
+    xlab("% change in area") + 
+    vline_at(0, color="grey") +
+    ggtitle("Activity space area") +
+    xlim(-50, 50)
+  
+  
+  p.m2 <- p.m2.c_emotionalDiff + p.m2.y_emotionalDiff + p.m2.y_cdi
+  
+  p.m2 + plot_annotation(
+    title = 'Association between emotional problems/depression symptoms and activity space area',
+    subtitle = "plot shows % change in activity space area for every 1 SD increase in emotional problems/depression symptoms, 80% intervals shown in yellow",
+    caption = "SDQ emotion = emotional problems subscale; CDI = Children's Depression Inventory; CR = caregiver-report about adolescents; AR = adolescent report"
+)
+ 
+```
+
+## Is dotmap-generated risk density a valid measure of social-ecological risk?
+
+```{r}
+  df_sl <- 
+  df_ %>%
+    dplyr::select(sublocation, sl_risk, c_com56sl_gm) %>% 
+    distinct(sublocation, .keep_all = TRUE) %>% 
+    filter(!is.na(sublocation))
+
+  sl_den_svy_sp <- cor.test(x=df_sl$sl_risk, y=df_sl$c_com56sl_gm, 
+                            method = 'spearman')
+```
+
+At the sublocation level, we find that the density of dangerous places is positively correlated with the independent survey data about dangerous places (*r~s~*=`r printnum(sl_den_svy_sp$estimate, digits=2)`, *p*=`r printnum(sl_den_svy_sp$p.value, digits=2)`). This is (weak) evidence of convergent validity. 
+
+## Is social-ecological risk associated with individual HIV risk beliefs and behaviours?
+
+```{r, cache=TRUE, results='hide'}
+  
+  outcomes <- c("y_nightoutfreqN_b", "y_higherHivRisk", "y_sexbelief")
+
+  iv <- c("as_risk_z", "sl_risk_z")
+
+  fit <- NULL
+  for (o in 1:length(outcomes)) {
+    
+    for (i in 1:length(iv)) {
+      
+      if (o==1 | o==2) {
+        
+        formula <- as.formula(paste(outcomes[o],
+                                    "~", 
+                                    iv[i], 
+                                    "+ (1 | school)"))
+        
+        m <- do.call("brm", list(formula = formula, 
+                                 family="bernoulli",
+                                 data = quote(df_),
+                                 seed=325,
+                                 iter=4000,
+                                 control = list(adapt_delta = 0.99)
+                     ))
+        
+        x <- m
+        assign(paste("m", outcomes[o], iv[i], sep="."), x)
+        remove(x)
+        
+        m_ <- 
+        m %>%
+        spread_draws((!!sym(paste0("b_", iv[i])))) %>%
+        rename("coef" = paste0("b_", iv[i])) %>%
+        mutate(coef = exp(coef)) %>%
+        mutate(iv_ = iv[i]) %>%
+        mutate(out = outcomes[o])
+        
+      } else {
+        
+        formula <- as.formula(paste("scale(",
+                                    outcomes[o],
+                                    ") ~", 
+                                    iv[i], 
+                                    "+ (1 | school)"))
+        
+        m <- do.call("brm", list(formula = formula, 
+                                 data = quote(df_),
+                                 seed=325,
+                                 iter=4000,
+                                 control = list(adapt_delta = 0.99)
+                     ))
+        
+        x <- m
+        assign(paste("m", outcomes[o], iv[i], sep="."), x)
+        remove(x)
+        
+        m_ <- 
+        m %>%
+        spread_draws((!!sym(paste0("b_", iv[i])))) %>%
+        rename("coef" = paste0("b_", iv[i])) %>%
+        mutate(iv_ = iv[i]) %>%
+        mutate(out = outcomes[o])
+        
+      }
+      
+      fit <- fit %>% bind_rows(m_)
+      remove(m_)
+      
+    }
+    
+  }
+```
+
+```{r}
+  m3.1.sl <- hypothesis(m.y_nightoutfreqN_b.sl_risk_z, "sl_risk_z > 0")
+  m3.2.sl <- hypothesis(m.y_sexbelief.sl_risk_z, "sl_risk_z > 0")
+  m3.3.sl <- hypothesis(m.y_higherHivRisk.sl_risk_z, "sl_risk_z > 0") # log odds
+```
+
+Figure \@ref(fig:semodels) displays the change across 3 outcomes for every 1 standard deviation increase in risk density measured at the activity space or sublocation levels. Each panel shows Markov chain Monte Carlo draws from the posterior distributions of the risk density parameters. We observe evidence of positive associations between individual risk and social-ecological risk at the sublocation level, but not the activity space level. 
+
+```{r semodels, fig.cap="Results of 6 separate Bayesian linear mixed effects models of HIV risk outcomes with fixed effects for risk density of activity spaces or sublocations. All models included a random effect for school. Plots show Markov chain Monte Carlo draws from the posterior distributions of the risk density parameters. Predictors and outcomes standardized (except binary outcomes). The point estimates of the coefficients can be interpreted as the predicted change in each outcome for every 1 standard deviation increase in risk density. CR=caregiver report about adolescents. AR=adolescent report.", fig.height=4, fig.width=10}
+
+  fit.w <-
+  fit %>% 
+    mutate(iv_ = ifelse(iv_=="as_risk_z", "Activity space",
+                 ifelse(iv_=="sl_risk_z", "Sublocation", 
+                        "?"))) %>%
+    pivot_wider(id_cols = c(-iv_, -coef),
+                names_from = "iv_",
+                values_from = "coef")
+
+  color_scheme_set("viridisA")
+  bayesplot_theme_set(theme_minimal())
+  
+  p.y_nightoutfreqN_b <- 
+  fit.w %>% 
+    filter(out=="y_nightoutfreqN_b") %>%
+    dplyr::select(-`.chain`, -`.iteration`, -`.draw`, -out) %>%
+    mcmc_areas_ridges(prob = 0.8) + 
+    xlab("Odds Ratio") + 
+    vline_at(1, color="grey") +
+    ggtitle("Leaving the house at night, AR",
+            subtitle = ">1 = increased odds") +
+    xlim(0, 3)
+  
+  p.y_higherHivRisk <- 
+  fit.w %>% 
+    filter(out=="y_higherHivRisk") %>%
+    dplyr::select(-`.chain`, -`.iteration`, -`.draw`, -out) %>%
+    mcmc_areas_ridges(prob = 0.8) + 
+    xlab("Odds Ratio") + 
+    vline_at(1, color="grey") +
+    ggtitle("At higher risk for HIV, AR",
+            subtitle = ">1 = increased odds") +
+    xlim(0, 3)
+  
+  p.y_sexbelief <- 
+  fit.w %>% 
+    filter(out=="y_sexbelief") %>%
+    dplyr::select(-`.chain`, -`.iteration`, -`.draw`, -out) %>%
+    mcmc_areas_ridges(prob = 0.8) + 
+    xlab("SD") + 
+    vline_at(0, color="grey") +
+    ggtitle("'Risky' sex beliefs, AR",
+            subtitle = "higher scores = 'riskier' beliefs") +
+    xlim(-.5, .5)
+  
+  
+  se.p <- p.y_nightoutfreqN_b + p.y_sexbelief + p.y_higherHivRisk
+  
+  se.p + plot_annotation(
+    title = 'Association between risk density metrics and outcomes',
+    subtitle = "plot shows change in outcomes for every 1 SD increase in risk density, 80% intervals shown in yellow",
+    caption = "CR = caregiver-report about adolescents; AR = adolescent report"
+)
+ 
+```
+
+At the activity space level, the posterior probabilities of environmental risk density are centered around 0 for the sex beliefs outcome and around 1 for the binary outcomes of leaving the house at night and being at higher risk for HIV, suggesting that there is no association. However, the posterior distribution for the fixed effect of sublocation risk density is shifted to the right for each sex/HIV outcome, suggesting a possible increase in individual risk beliefs and behaviours as sublocation risk density increases. A 1 standard deviation increase in sublocation risk density is associated with higher odds of leaving the house unsupervised at night (OR=`r printnum(exp(fixed.effects(m.y_nightoutfreqN_b.sl_risk_z)["sl_risk_z", "Estimate"]), digits=1)`), a `r printnum(abs(fixed.effects(m.y_sexbelief.sl_risk_z)["sl_risk_z", "Estimate"]), digits=2)` standard deviation increase in 'risky' beliefs about sex and HIV, and higher odds of being at higher risk for HIV (OR=`r printnum(exp(fixed.effects(m.y_higherHivRisk.sl_risk_z)["sl_risk_z", "Estimate"]), digits=1)`). The posterior probability that each effect is greater than 0 (or 1 in the case of the binary outcomes)—implying some degree of a positive association—is `r printnum(as.numeric(m3.1.sl$hypothesis["Post.Prob"]*100), digits=1)`%, `r printnum(as.numeric(m3.2.sl$hypothesis["Post.Prob"]*100), digits=1)`%, and `r printnum(as.numeric(m3.3.sl$hypothesis["Post.Prob"]*100), digits=1)`%, respectively.
+
+# Discussion
+
+In this paper we report on an analysis of data collected as part of a cross-sectional study on adolescent HIV risk in rural Kenya. We interviewed adolescents with the aid of high-resolution satellite imagery to create georeferenced activity logs that we used to construct individuals' activity spaces. We then characterized the social-ecological risk (danger) of each activity space and the surrounding neighbourhoods using data from participatory mapping exercises and surveys of parents and guardians.
+
+We were motivated by numerous applications of ecological models to the study of HIV prevention [e.g., @parker2003; @poundstone2004; @auerbach2011; @diclemente2016; @rhodes2005; @baral2013] to attempt to quantify ecological risk for adolescents at the neighbourhood level in a rural setting without existing sources of community risk data. We measured risk by digitizing risk maps that parents, teachers, and community leaders created in focus groups, described in @green:2016, and then we calculated the density of dangerous places per sublocation and activity space. We were limited in our options for validating this measure, but we did find a high correlation with independent survey data about dangerous places, an indicator of convergent validity.
+
+If our measure of danger density is a valid representation of ecological risk, then our study supports the contention of ecological models that characteristics of communities may influence individual behaviours. We found positive associations between community risk and adolescents' HIV-related beliefs and behaviours. As risk density increases, so do risky sex beliefs and behaviours, including sex without a condom or multiple partners. This is consistent with previous work reporting connections between place and HIV risk. As one example, in a study of men who have sex with men [@vaughan2017], activity spaces were associated with both risk and prevention behaviours, with results highlighting the need for "place" to be examined beyond just place of residence, as we did in this study.
+
+Beyond location, we know that place is part of a larger ecological picture where community characteristics, interpersonal relationships, and individual-level factors all interact [@govender2019]. Examining these interactions is important for exploring the mechanisms that link activity spaces and risk. Research has shown, for instance, that HIV risk behaviours and beliefs cluster within social networks that can be closely linked to physical location [@zelenev2016]. Among young men in Tanzania, for instance, both beliefs and behaviours associated with HIV risk clustered within close-knit men's social groups [@mulawa2016]. The influence of peers is a powerful influence underlying these types of associations, both in terms of norms within peer groups [@van2015] and direct peer pressure [@negeri2014;@govender2019]. Indeed, a qualitative study conducted in rural Kenya with adolescents and young adults yielded detailed reports of both the negative and positive influences the peers can have on decisions related to sexual risk behaviour [@harper2014]. In the setting of this study, we must also consider transactional sex is a known concern in this region and associated with beaches along Lake Victoria, where fishing and selling are often done [@kwena2019]. Consistent with this, recently documented rates of HIV remain higher in fishing communities in this area of Kenya [@kwena2012]. In our data, the risk densities were indeed higher at the beach locations, and it would be valuable in future work to carefully examine how social networks, peer influences, and time spent near beaches interact to influence sexual risk behaviour and HIV infection.
+
+In this study, we only observed this association between community risk and risk beliefs/behaviour at the sublocation level, not at the level of adolescents' activity spaces. This could suggest that adolescents are more influenced by their broader community context compared to their immediate and routine social settings. This finding could also reflect measurement error if adolescents were reluctant to document visits to known specific areas that adults consider 'off-limits.' It is also possible that adolescents may live near high-risk spots and have easy access to them (e.g., live in sublocations with beaches known to be sites for transactional sex) but not visit those specific spots with high frequency.  In these cases, risk exposure would be more likely to be captured at the sublocation level (standard definition) than at the level of adolescents' activity spaces (unique definition).
+
+In addition to investigating these questions about ecological risk, we also explored the relationship between activity space size and adolescent characteristics (demographics and emotional wellbeing). First, we sought to replicate a finding reported in @hallman2015 about the 'shrinking world of girls at puberty'. In that study, the authors reported an interaction between age and gender with respect to the size of adolescents' social spaces. As girls entered puberty, @hallman2015 found that their spaces shrank while boys' spaces expanded. We did not replicate this result. In fact, our findings suggest that girls' activity spaces may increase at a faster rate than boys' spaces as they age, although the credible intervals are overlapping. In our particular study context, there are multiple possibilities that could drive this finding. One is that girls' chores and home responsibilities may expand as they get older and sometimes require more movement for activities such as obtaining water or shopping. More concerning is the possibility that girls who are living in poverty may begin spending time further from home for reasons related to risky behaviours, such as seeking out opportunities to exchange sex for money in order to meet their financial and material needs [@juma2013;@zamudio2020]. 
+
+Aside from these potential population differences that could of course account for these discrepant findings—@hallman2015 conducted their study in two communities in South Africa, one urban one rural—it is also possible that methodological differences in the measurement of activity space are the driver. In their study, @hallman2015 asked eight groups of adolescents, segregated by grade level (grade 5 vs grades 8-9) and gender, to hand draw one reference map of the community for the group and to use markers to indicate safe and unsafe places. The research team used Google Maps to identify as many of these places as possible and created digital waypoints for each group's map. Researchers then drew a digital rectangular bounding box—the "community space"—that encompassed each group's waypoints and calculated the area in square meters. This resulted in four measurements of community space in each community: grade 5 girls, grade 5 boys, grades 8-9 girls, grades 8-9 boys.
+
+In contrast, we constructed 218 individual activity spaces based on each adolescent's georeferenced activity log. This enabled us to observe substantial variability in individual activity space size that was hidden to @hallman2015 on account of their group-based approach. We cannot know if a subsequent group data collection process in our study would have recovered the mean areas we calculated on the basis of individual activity spaces, but it seems doubtful. Given the choice between either method, starting with individual-level data may offer measurement advantages.
+
+Finally, we also examined the relationship between activity space size and adolescents’ emotional problems and symptoms of depression. Based on the results of a recent meta-analysis of childhood physical activity and adolescent depression [@korczak2017], we hypothesized that we would observe a negative correlation between emotional problems/depression symptoms and geographic mobility. We did not. One reason for this could be our lack of a clinical sample. Most adolescents did not report high levels of depression symptoms. It could also be the case that activity space size is not a good proxy for mobility, as area does not fully capture physical activity.
+
+## Limitations
+
+Our process of interviewing adolescents about their daily activities with the aid of high-resolution satellite imagery made it easy to create personalized and georeferenced activity logs for each participant [@green:2016], but we recognize several issues that limited our measurement of activity spaces. First, we were only able to ask adolescents about their activities on a single reference day at one cross-section in the life of the community. Second, our method of capturing data on frequency of visits to each location did not produce usable data to incorporate into activity space construction as weights. Future work would benefit from a longitudinal perspective that also allows for weighting by frequency. This is trivial to accomplish with tracking hardware and software, of course, but it should also be possible with a low-tech approach like the one we adopted.
+
+## Conclusions
+
+We find support for the conjecture, derived from social-ecological models of HIV transmission, that community-level risks may be associated with individual beliefs and behaviours. As community risk increased for a sample of Kenyan adolescents, so did their reports of riskier sex beliefs and behaviours, as well as unsupervised outings at night. Therefore, this study reinforces calls for disease prevention approaches that go beyond emphasizing individual behaviour change.
+
+\newpage
+
+# Acknowledgements 
+
+We would like to thank Dyan Moses and Judith Andrew for their assistance carrying out the study.
+
+# Disclosure Statement
+
+The authors report no conflict of interest.
+
+\newpage
+
+# References
+
+
